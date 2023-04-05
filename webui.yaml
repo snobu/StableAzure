@@ -1,0 +1,55 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: webui
+  labels:
+    app: webui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webui
+  template:
+    metadata:
+      labels:
+        app: webui
+    spec:
+      tolerations:
+        - key: GPU
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        agentpool: gpupool
+        accelerator: nvidia
+      containers:
+        - name: sdwebui
+          image: shipyard.azurecr.io/sd/sdwebui
+          ports:
+            - containerPort: 7860
+          volumeMounts:
+            - name: nvidia
+              mountPath: /usr/local/nvidia
+          # resources:
+          #   limits:
+          #     nvidia.com/gpu: 1
+      volumes:
+        - name: nvidia
+          hostPath:
+            path: /usr/local/nvidia
+        #- name: weights
+        #  persistentVolumeClaim:
+        #    claimName: weights-disk
+      restartPolicy: Always
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: webui
+spec:
+  type: LoadBalancer
+  selector:
+    app: webui
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 7860
