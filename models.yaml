@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: models
+  namespace: default
+data:
+  models.txt: |
+    # Model 1.4
+    https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt
+    # Model 1.5 (8GB) - only necessary for native training, not for embeddings/hypernetworks
+    https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned.ckpt 
+    # Model 1.5 (4GB)
+    https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt 
+    # Inpainting model 1.5 (4GB)
+    https://huggingface.co/runwayml/stable-diffusion-inpainting/resolve/main/sd-v1-5-in
