@@ -53,6 +53,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' = {
         enableAutoScaling: false
         osDiskSizeGB: 30
         osDiskType: 'Ephemeral'
+      }
     ]
   }
 }
