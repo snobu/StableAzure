@@ -14,9 +14,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' = {
     type: 'SystemAssigned'
   }
   properties: {
-    acrProfile: {
-      name: registryName
-    }
     kubernetesVersion: k8sversion
     dnsPrefix: clusterName
     enableRBAC: true
@@ -56,24 +53,27 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' = {
       }
     ]
   }
-  // associate the cluster with the registry
-  dependsOn: [
-    registry
-  ]
-  //give permissions to the cluster to pull images from the registry
-  resources: [
-    {
-      type: 'roleAssignments'
-      name: guid(aksCluster.id, registry.id)
-      apiVersion: '2020-04-01-preview'
-      properties: {
-        roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', subscription().subscriptionId)
-        principalId: aksCluster.identity.principalId
-        principalType: 'ServicePrincipal'
+}
+
+resource acrRoleAssignment 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
+  name: guid(aksCluster.name, registry.name)
+  scope: registry
+  properties: {
+    roleName: 'AcrPull'
+    description: 'Allow ACR to pull images'
+    type: 'CustomRole'
+    permissions: [
+      {
+        actions: [
+          'Microsoft.ContainerRegistry/registries/pull'
+        ]
+        notActions: []
       }
-    }
-  ]
-  
+    ]
+    assignableScopes: [
+      registry.id
+    ]
+  }
 }
 
 resource registry 'Microsoft.ContainerRegistry/registries@2021-06-01-preview' = {
