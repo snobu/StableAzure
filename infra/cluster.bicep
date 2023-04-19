@@ -56,6 +56,24 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' = {
       }
     ]
   }
+  // associate the cluster with the registry
+  dependsOn: [
+    registry
+  ]
+  //give permissions to the cluster to pull images from the registry
+  resources: [
+    {
+      type: 'roleAssignments'
+      name: guid(aksCluster.id, registry.id)
+      apiVersion: '2020-04-01-preview'
+      properties: {
+        roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', subscription().subscriptionId)
+        principalId: aksCluster.identity.principalId
+        principalType: 'ServicePrincipal'
+      }
+    }
+  ]
+  
 }
 
 resource registry 'Microsoft.ContainerRegistry/registries@2021-06-01-preview' = {
