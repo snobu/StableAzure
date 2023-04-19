@@ -23,7 +23,7 @@ spec:
         accelerator: nvidia
       containers:
         - name: sdwebui
-          image: shipyard.azurecr.io/sd/sdwebui
+          image: stableregistry.azurecr.io/sd/sdwebui
           ports:
             - containerPort: 7860
           volumeMounts:
