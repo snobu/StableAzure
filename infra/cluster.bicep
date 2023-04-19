@@ -10,7 +10,13 @@ param nodeSizeGPU string = 'Standard_NC6s_v3'
 resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' = {
   name: clusterName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
+    acrProfile: {
+      name: registryName
+    }
     kubernetesVersion: k8sversion
     dnsPrefix: clusterName
     enableRBAC: true
@@ -20,9 +26,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' = {
       dnsServiceIP: '10.0.0.10'
       dockerBridgeCidr: '172.17.0.1/16'
       loadBalancerSku: 'standard'
-      networkPolicyProfile: {
-        enabled: false
-      }
     }
     agentPoolProfiles: [
       {
@@ -30,32 +33,13 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' = {
         count: nodeCount
         vmSize: nodeSize
         osType: 'Linux'
-        maxPodsPerNode: 110
+        maxPods: 110
         type: 'VirtualMachineScaleSets'
         mode: 'System'
         availabilityZones: []
         enableAutoScaling: false
         osDiskSizeGB: 30
         osDiskType: 'Managed'
-        storageProfile: {
-          osDisk: {
-            caching: 'ReadWrite'
-            managedDisk: {
-              storageAccountType: 'Premium_LRS'
-            }
-            diskSizeGB: 30
-            diffDiskSettings: {
-              option: 'Local'
-            }
-          }
-          imageReference: {
-            offer: 'UbuntuServer'
-            publisher: 'Canonical'
-            sku: '20_04-lts-gen2'
-            version: 'latest'
-          }
-          dataDisks: []
-        }
       }
       {
         name: 'gpupool'
@@ -69,32 +53,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' = {
         enableAutoScaling: false
         osDiskSizeGB: 30
         osDiskType: 'Ephemeral'
-        storageProfile: {
-          osDisk: {
-            caching: 'ReadWrite'
-            managedDisk: {
-              storageAccountType: 'Premium_LRS'
-            }
-            diskSizeGB: 30
-            diffDiskSettings: {
-              option: 'Local'
-            }
-          }
-          imageReference: {
-            offer: 'UbuntuServer'
-            publisher: 'Canonical'
-            sku: '20_04-lts-gen2'
-            version: 'latest'
-          }
-          dataDisks: []
-        }
-      }
     ]
-    identityProfile: {}
-    servicePrincipalProfile: {
-      clientId: ''
-      secret: ''
-    }
   }
 }
 
@@ -106,14 +65,5 @@ resource registry 'Microsoft.ContainerRegistry/registries@2021-06-01-preview' = 
   }
   properties: {
     adminUserEnabled: true
-  }
-}
-
-resource aksAcrPermissions 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: 'aksAcrPermissions'
-  scope: registry
-  properties: {
-    principalId: aksCluster.identity.principalId
-    roleDefinitionId: ''
   }
 }
