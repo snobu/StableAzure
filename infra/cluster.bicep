@@ -55,27 +55,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' = {
   }
 }
 
-resource acrRoleAssignment 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
-  name: guid(aksCluster.name, registry.name)
-  scope: registry
-  properties: {
-    roleName: 'AcrPull'
-    description: 'Allow ACR to pull images'
-    type: 'CustomRole'
-    permissions: [
-      {
-        actions: [
-          'Microsoft.ContainerRegistry/registries/pull'
-        ]
-        notActions: []
-      }
-    ]
-    assignableScopes: [
-      registry.id
-    ]
-  }
-}
-
 resource registry 'Microsoft.ContainerRegistry/registries@2021-06-01-preview' = {
   name: registryName
   location: location
