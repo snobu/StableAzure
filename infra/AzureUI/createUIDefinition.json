@@ -1,19 +1,12 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "metadata": {
-    "_generator": {
-      "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "7248931195153543784"
-    }
-  },
+  "contentVersion": "1.0.0.0",  
   "parameters": {
-    "skuName": {
+    "acrName": {
       "type": "string",
-      "defaultValue": "S1",
+      "defaultValue": "stableazureacr",
       "metadata": {
-        "description": "Which Pricing tier our App Service Plan to"
+        "description": "Provide name for ACR"
       }
     },
     "skuCapacity": {
@@ -30,11 +23,32 @@
         "description": "Location for all resources."
       }
     },
-    "appName": {
+    "nodeCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Node count for system pool"
+      }
+    },
+    "nodeCountGPU": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Node GPU count for system pool"
+      }
+    },
+    "clusterName": {
       "type": "string",
       "defaultValue": "[uniqueString(resourceGroup().id)]",
       "metadata": {
-        "description": "Name that will be used to build associated artifacts"
+        "description": "Cluster name"
+      }
+    },
+    "nodeSizeGPU": {
+      "type": "string",
+      "defaultValue": "[uniqueString(resourceGroup().id)]",
+      "metadata": {
+        "description": "SKU name for GPU"
       }
     }
   },

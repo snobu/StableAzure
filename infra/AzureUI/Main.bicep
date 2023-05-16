@@ -1,128 +1,84 @@
-﻿@description('Which Pricing tier our App Service Plan to')
-param skuName string = 'S1'
-
-@description('How many instances of our app service will be scaled out to')
-param skuCapacity int = 1
-
-@description('Location for all resources.')
+﻿@description('Location for all resources.')
 param location string = resourceGroup().location
 
-@description('Name that will be used to build associated artifacts')
-param appName string = uniqueString(resourceGroup().id)
+@minLength(5)
+@maxLength(50)
+@description('Provide a globally unique name of your Azure Container Registry')
+param registryName string = 'acr-${uniqueString(resourceGroup().id)}'
 
-var appServicePlanName = toLower('asp-${appName}')
-var webSiteName = toLower('wapp-${appName}')
-var appInsightName = toLower('appi-${appName}')
-var logAnalyticsName = toLower('la-${appName}')
+@minLength(2)
+@maxLength(64)
+@description('Provide a globally unique name of your cluster name')
+param clusterName string = 'stable-cluster-${uniqueString(resourceGroup().id)}'
+param k8sversion string = '1.25.6'
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2020-06-01' = {
-  name: appServicePlanName
-  location: location
-  sku: {
-    name: skuName
-    capacity: skuCapacity
-  }
-  tags: {
-    displayName: 'HostingPlan'
-    ProjectName: appName
-  }
-}
+@description('Provide a system node count for the cluster')
+param nodeCount int = 2
 
-resource appService 'Microsoft.Web/sites@2020-06-01' = {
-  name: webSiteName
+@description('Provide a system node size for the cluster')
+param nodeSize string = 'Standard_E2bs_v5'
+
+@description('Provide a GPU node count for the cluster')
+param nodeCountGPU int = 1
+
+@description('Provide a GPU node size for the cluster')
+param nodeSizeGPU string = 'Standard_NC6s_v3'
+
+resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' = {
+  name: clusterName
   location: location
   identity: {
     type: 'SystemAssigned'
   }
-  tags: {
-    displayName: 'Website'
-    ProjectName: appName
-  }
-  dependsOn: [
-    logAnalyticsWorkspace
-  ]
   properties: {
-    serverFarmId: appServicePlan.id
-    httpsOnly: true
-    siteConfig: {
-      minTlsVersion: '1.2'
+    kubernetesVersion: k8sversion
+    dnsPrefix: clusterName
+    enableRBAC: true
+    networkProfile: {
+      networkPlugin: 'azure'
+      serviceCidr: '10.0.0.0/16'
+      dnsServiceIP: '10.0.0.10'
+      dockerBridgeCidr: '172.17.0.1/16'
+      loadBalancerSku: 'standard'
     }
-  }
-}
-
-resource appServiceLogging 'Microsoft.Web/sites/config@2020-06-01' = {
-  parent: appService
-  name: 'appsettings'
-  properties: {
-    APPINSIGHTS_INSTRUMENTATIONKEY: appInsights.properties.InstrumentationKey
-  }
-  dependsOn: [
-    appServiceSiteExtension
-  ]
-}
-
-resource appServiceSiteExtension 'Microsoft.Web/sites/siteextensions@2020-06-01' = {
-  parent: appService
-  name: 'Microsoft.ApplicationInsights.AzureWebSites'
-  dependsOn: [
-    appInsights
-  ]
-}
-
-resource appServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
-  parent: appService
-  name: 'logs'
-  properties: {
-    applicationLogs: {
-      fileSystem: {
-        level: 'Warning'
+    agentPoolProfiles: [
+      {
+        name: 'systempool'
+        count: nodeCount
+        vmSize: nodeSize
+        osType: 'Linux'
+        maxPods: 110
+        type: 'VirtualMachineScaleSets'
+        mode: 'System'
+        availabilityZones: []
+        enableAutoScaling: false
+        osDiskSizeGB: 30
+        osDiskType: 'Managed'
       }
-    }
-    httpLogs: {
-      fileSystem: {
-        retentionInMb: 40
-        enabled: true
+      {
+        name: 'gpupool'
+        count: nodeCountGPU
+        vmSize: nodeSizeGPU
+        osType: 'Linux'
+        maxPods: 110
+        type: 'VirtualMachineScaleSets'
+        mode: 'User'
+        availabilityZones: []
+        enableAutoScaling: false
+        osDiskSizeGB: 30
+        osDiskType: 'Ephemeral'
       }
-    }
-    failedRequestsTracing: {
-      enabled: true
-    }
-    detailedErrorMessages: {
-      enabled: true
-    }
+    ]
   }
 }
 
-resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: appInsightName
+resource registry 'Microsoft.ContainerRegistry/registries@2021-06-01-preview' = {
+  name: registryName
   location: location
-  kind: 'string'
-  tags: {
-    displayName: 'AppInsight'
-    ProjectName: appName
+  sku: {
+    name: 'Standard'
   }
   properties: {
-    Application_Type: 'web'
-    WorkspaceResourceId: logAnalyticsWorkspace.id
-  }
-}
-
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
-  name: logAnalyticsName
-  location: location
-  tags: {
-    displayName: 'Log Analytics'
-    ProjectName: appName
-  }
-  properties: {
-    sku: {
-      name: 'PerGB2018'
-    }
-    retentionInDays: 120
-    features: {
-      searchVersion: 1
-      legacy: 0
-      enableLogAccessUsingOnlyResourcePermissions: true
-    }
+    adminUserEnabled: true
   }
 }

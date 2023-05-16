@@ -1,0 +1,33 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "WestEurope"
+    },
+    "registryName": {
+      "value": "stablezureregistry"
+    },
+    "clusterName": {
+      "value": "stable-azure-k8s"
+    },
+    "k8sversion": {
+      "value": "1.25.6"
+    },
+    "nodeCount": {
+      "value": "1"
+    },
+    "nodeSize": {
+      "value": "Standard_E2bs_v5"
+    },
+    "nodeCountGPU": {
+      "value": "1"
+    },
+    "nodeSizeGPU": {
+      "value": "Standard_NC6s_v3"
+    },
+    "resourceGroupLocation": {
+      "value": "WestEurope"
+    }
+  }
+}
