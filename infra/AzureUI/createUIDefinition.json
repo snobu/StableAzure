@@ -1,189 +1,592 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",  
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
   "parameters": {
-    "acrName": {
-      "type": "string",
-      "defaultValue": "stableazureacr",
-      "metadata": {
-        "description": "Provide name for ACR"
-      }
-    },
-    "skuCapacity": {
-      "type": "int",
-      "defaultValue": 1,
-      "metadata": {
-        "description": "How many instances of our app service will be scaled out to"
-      }
-    },
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location for all resources."
-      }
-    },
-    "nodeCount": {
-      "type": "int",
-      "defaultValue": 1,
-      "metadata": {
-        "description": "Node count for system pool"
-      }
-    },
-    "nodeCountGPU": {
-      "type": "int",
-      "defaultValue": 1,
-      "metadata": {
-        "description": "Node GPU count for system pool"
-      }
-    },
-    "clusterName": {
-      "type": "string",
-      "defaultValue": "[uniqueString(resourceGroup().id)]",
-      "metadata": {
-        "description": "Cluster name"
-      }
-    },
-    "nodeSizeGPU": {
-      "type": "string",
-      "defaultValue": "[uniqueString(resourceGroup().id)]",
-      "metadata": {
-        "description": "SKU name for GPU"
-      }
-    }
-  },
-  "variables": {
-    "appServicePlanName": "[toLower(format('asp-{0}', parameters('appName')))]",
-    "webSiteName": "[toLower(format('wapp-{0}', parameters('appName')))]",
-    "appInsightName": "[toLower(format('appi-{0}', parameters('appName')))]",
-    "logAnalyticsName": "[toLower(format('la-{0}', parameters('appName')))]"
-  },
-  "resources": [
-    {
-      "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('appServicePlanName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "[parameters('skuName')]",
-        "capacity": "[parameters('skuCapacity')]"
-      },
-      "tags": {
-        "displayName": "HostingPlan",
-        "ProjectName": "[parameters('appName')]"
-      }
-    },
-    {
-      "type": "Microsoft.Web/sites",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('webSiteName')]",
-      "location": "[parameters('location')]",
-      "identity": {
-        "type": "SystemAssigned"
-      },
-      "tags": {
-        "displayName": "Website",
-        "ProjectName": "[parameters('appName')]"
-      },
-      "properties": {
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
-        "httpsOnly": true,
-        "siteConfig": {
-          "minTlsVersion": "1.2"
+    "basics": [
+      {
+        "name": "clusterName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Sample Input",
+        "defaultValue": "",
+        "constraints": {
+          "required": false
         }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
-        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Web/sites/config",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}', variables('webSiteName'), 'appsettings')]",
-      "properties": {
-        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightName'))).InstrumentationKey]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Insights/components', variables('appInsightName'))]",
-        "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]",
-        "[resourceId('Microsoft.Web/sites/siteextensions', variables('webSiteName'), 'Microsoft.ApplicationInsights.AzureWebSites')]"
-      ]
-    },
-    {
-      "type": "Microsoft.Web/sites/siteextensions",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}', variables('webSiteName'), 'Microsoft.ApplicationInsights.AzureWebSites')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Insights/components', variables('appInsightName'))]",
-        "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Web/sites/config",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}', variables('webSiteName'), 'logs')]",
-      "properties": {
-        "applicationLogs": {
-          "fileSystem": {
-            "level": "Warning"
+      }
+    ],
+    "steps": [
+      {
+        "name": "simpleControls",
+        "label": "Simple Controls",
+        "elements": [
+          {
+            "name": "infoMessage",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "Welcome to the Azure Ice Cream Shop"
+            }
+          },
+          {
+            "name": "iceCreamFlavors",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Ice Cream Flavors",
+            "defaultValue": "Chocolate",
+            "toolTip": "",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "Chocolate",
+                  "value": "brown"
+                },
+                {
+                  "label": "Strawberry",
+                  "value": "pink"
+                },
+                {
+                  "label": "Vanilla",
+                  "value": "white"
+                },
+                {
+                  "label": "Azureberry",
+                  "value": "blue"
+                }
+              ],
+              "required": true
+            },
+            "visible": true
+          },
+          {
+            "name": "coneType",
+            "type": "Microsoft.Common.OptionsGroup",
+            "label": "Cone Option",
+            "defaultValue": "Waffle Cone",
+            "toolTip": "",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "Waffle Cone",
+                  "value": "waffle"
+                },
+                {
+                  "label": "Sugar Cone",
+                  "value": "sugar"
+                },
+                {
+                  "label": "Pretzel Cone",
+                  "value": "pretzel"
+                },
+                {
+                  "label": "None (cup)",
+                  "value": "cup"
+                }
+              ],
+              "required": true
+            },
+            "visible": true
+          },
+          {
+            "name": "newsletter",
+            "type": "Microsoft.Common.Section",
+            "label": "Monthly Newsletter",
+            "elements": [
+              {
+                "name": "announcement",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "Join our Flavor of the Month club and never miss a single delicious announcement! No spam (no kidding). Must be at least 18 years old to register.",
+                  "link": {
+                    "label": "Learn more",
+                    "uri": "https://www.microsoft.com"
+                  }
+                }
+              },
+              {
+                "name": "emailAddress",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Email",
+                "defaultValue": "",
+                "toolTip": "Please enter a valid email account",
+                "constraints": {
+                  "required": false,
+                  "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$",
+                  "validationMessage": "Email is not valid. Please re-enter."
+                },
+                "visible": true
+              },
+              {
+                "name": "legalAccept",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "I agree to the terms and conditions.",
+                "constraints": {
+                  "required": true,
+                  "validationMessage": "Please acknowledge the legal conditions."
+                }
+              }
+            ],
+            "visible": true
           }
-        },
-        "httpLogs": {
-          "fileSystem": {
-            "retentionInMb": 40,
-            "enabled": true
+        ]
+      },
+      {
+        "name": "vmParameters",
+        "label": "VM Parameters",
+        "elements": [
+          {
+            "name": "vmSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Customize your VM",
+            "elements": [
+              {
+                "name": "vmSize",
+                "type": "Microsoft.Compute.SizeSelector",
+                "label": "Size",
+                "toolTip": "",
+                "recommendedSizes": [
+                  "Standard_D1",
+                  "Standard_D2",
+                  "Standard_D3",
+                  "Standard_B1s"
+                ],
+                "constraints": {
+                  "allowedSizes": []
+                },
+                "options": {
+                  "hideDiskTypeFilter": false
+                },
+                "osPlatform": "Windows",
+                "imageReference": {
+                  "publisher": "MicrosoftWindowsServer",
+                  "offer": "WindowsServer",
+                  "sku": "2012-R2-Datacenter"
+                },
+                "count": 2,
+                "visible": true
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "adminUsername",
+            "type": "Microsoft.Compute.UserNameTextBox",
+            "label": "Admin Username",
+            "defaultValue": "",
+            "toolTip": "",
+            "constraints": {
+              "required": true,
+              "regex": "^[a-z0-9A-Z]{1,30}$",
+              "validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+            },
+            "osPlatform": "Windows",
+            "visible": true
+          },
+          {
+            "name": "vmCredentials",
+            "type": "Microsoft.Compute.CredentialsCombo",
+            "label": {
+              "password": "Password",
+              "confirmPassword": "Confirm password"
+            },
+            "toolTip": {
+              "password": ""
+            },
+            "constraints": {
+              "required": true,
+              "customPasswordRegex": "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])[\\w~@#$%^&*+=|{}:;!.?\\()\\[\\]-]{8,}$",
+              "customValidationMessage": "The password must contain at least 8 characters, with at least 1 uppercase, 1 lowercase and 1 number."
+            },
+            "options": {
+              "hideConfirmation": false
+            },
+            "osPlatform": "Windows",
+            "visible": true
           }
-        },
-        "failedRequestsTracing": {
-          "enabled": true
-        },
-        "detailedErrorMessages": {
-          "enabled": true
-        }
+        ]
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Insights/components",
-      "apiVersion": "2020-02-02",
-      "name": "[variables('appInsightName')]",
-      "location": "[parameters('location')]",
-      "kind": "string",
-      "tags": {
-        "displayName": "AppInsight",
-        "ProjectName": "[parameters('appName')]"
+      {
+        "name": "storageSettings",
+        "label": "Storage Settings",
+        "elements": [
+          {
+            "name": "storageInfo",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": true,
+            "options": {
+              "text": "There are two controls which you can use for gathering storage requirements. They are the single and multi Storage Account selectors featured below.",
+              "link": {
+                "label": "",
+                "uri": ""
+              }
+            }
+          },
+          {
+            "name": "sectionStorage1",
+            "type": "Microsoft.Common.Section",
+            "label": "Single Selector",
+            "elements": [
+              {
+                "name": "singleStorage",
+                "type": "Microsoft.Storage.StorageAccountSelector",
+                "label": "Storage account",
+                "toolTip": "",
+                "defaultValue": {
+                  "name": "uniquestorageaccount01",
+                  "type": "Premium_LRS"
+                },
+                "constraints": {
+                  "allowedTypes": []
+                },
+                "options": {
+                  "hideExisting": false
+                },
+                "visible": true
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "sectionStorage2",
+            "type": "Microsoft.Common.Section",
+            "label": "Multi Selector",
+            "elements": [
+              {
+                "name": "multiStorage",
+                "type": "Microsoft.Storage.MultiStorageAccountCombo",
+                "label": {
+                  "prefix": "Storage account prefix",
+                  "type": "Storage account type"
+                },
+                "toolTip": {
+                  "prefix": "",
+                  "type": ""
+                },
+                "defaultValue": {
+                  "prefix": "aprefix",
+                  "type": "Premium_LRS"
+                },
+                "constraints": {
+                  "excludedTypes": []
+                },
+                "count": 2,
+                "visible": true
+              }
+            ],
+            "visible": true
+          }
+        ]
       },
-      "properties": {
-        "Application_Type": "web",
-        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+      {
+        "name": "networking",
+        "label": "Networking",
+        "elements": [
+          {
+            "name": "networkingInfo",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": true,
+            "options": {
+              "text": "There are two controls tailored towards gathering network requirements. They are the Public IP Address and Virtual Network combos seen below.",
+              "link": {
+                "label": "",
+                "uri": ""
+              }
+            }
+          },
+          {
+            "name": "sectionNetworking1",
+            "type": "Microsoft.Common.Section",
+            "label": "Public IP Address",
+            "elements": [
+              {
+                "name": "publicIp",
+                "type": "Microsoft.Network.PublicIpAddressCombo",
+                "label": {
+                  "publicIpAddress": "Public IP address",
+                  "domainNameLabel": "Domain name label"
+                },
+                "toolTip": {
+                  "publicIpAddress": "",
+                  "domainNameLabel": ""
+                },
+                "defaultValue": {
+                  "publicIpAddressName": "ip01",
+                  "domainNameLabel": "mydomain"
+                },
+                "constraints": {
+                  "required": {
+                    "domainNameLabel": true
+                  }
+                },
+                "options": {
+                  "hideNone": false,
+                  "hideDomainNameLabel": false,
+                  "hideExisting": false,
+                  "zone": 3
+                },
+                "visible": true
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "vnet",
+            "type": "Microsoft.Network.VirtualNetworkCombo",
+            "label": {
+              "virtualNetwork": "Virtual network",
+              "subnets": "Subnets"
+            },
+            "toolTip": {
+              "virtualNetwork": "",
+              "subnets": ""
+            },
+            "defaultValue": {
+              "name": "vnet01",
+              "addressPrefixSize": "/16"
+            },
+            "constraints": {
+              "minAddressPrefixSize": "/16"
+            },
+            "options": {
+              "hideExisting": false
+            },
+            "subnets": {
+              "subnet1": {
+                "label": "First subnet",
+                "defaultValue": {
+                  "name": "subnet-1",
+                  "addressPrefixSize": "/24"
+                },
+                "constraints": {
+                  "minAddressPrefixSize": "/24",
+                  "minAddressCount": 12
+                }
+              },
+              "subnet2": {
+                "label": "Second subnet",
+                "defaultValue": {
+                  "name": "subnet-2",
+                  "addressPrefixSize": "/26"
+                },
+                "constraints": {
+                  "minAddressPrefixSize": "/26",
+                  "minAddressCount": 8
+                }
+              }
+            },
+            "visible": true
+          }
+        ]
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.OperationalInsights/workspaces",
-      "apiVersion": "2020-08-01",
-      "name": "[variables('logAnalyticsName')]",
-      "location": "[parameters('location')]",
-      "tags": {
-        "displayName": "Log Analytics",
-        "ProjectName": "[parameters('appName')]"
+      {
+        "name": "selectorControls",
+        "label": "Selector Controls",
+        "elements": [
+          {
+            "name": "storageBlobSelectorSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Select storage blob",
+            "elements": [
+              {
+                "name": "storageBlobSelection",
+                "type": "Microsoft.Storage.StorageBlobSelector",
+                "visible": true,
+                "toolTip": "Select storage blob",
+                "label": "Package (.cspkg, .zip)",
+                "options": {
+                  "text": "Select Package"
+                },
+                "constraints": {
+                  "allowedFileExtensions": [ "zip", "cspkg" ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "keyVaultCertificateSelectorSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Select keyVault certificate",
+            "elements": [
+              {
+                "name": "keyVaultCertificateSelection",
+                "type": "Microsoft.KeyVault.KeyVaultCertificateSelector",
+                "visible": true,
+                "toolTip": "Select certificate",
+                "label": "KeyVault certificates selection"
+              }
+            ]
+          }
+        ]
       },
-      "properties": {
-        "sku": {
-          "name": "PerGB2018"
-        },
-        "retentionInDays": 120,
-        "features": {
-          "searchVersion": 1,
-          "legacy": 0,
-          "enableLogAccessUsingOnlyResourcePermissions": true
-        }
+      {
+        "name": "otherSettings",
+        "label": "Other Settings",
+        "elements": [
+          {
+            "name": "miscInfo",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": true,
+            "options": {
+              "text": "Users can upload local data using the FileUpload control and enter a password using the PasswordBox. The PasswordBox differs slightly from the CredentialsCombo because it doesn't provide an option for SSH key authentication.",
+              "link": {
+                "label": "",
+                "uri": ""
+              }
+            }
+          },
+          {
+            "name": "fileSelect",
+            "type": "Microsoft.Common.FileUpload",
+            "label": "Select a file",
+            "toolTip": "Only Word and XML files accepted",
+            "constraints": {
+              "required": false,
+              "accept": ".doc,.docx,.xml,application/msword"
+            },
+            "options": {
+              "multiple": false,
+              "uploadMode": "file",
+              "openMode": "text",
+              "encoding": "UTF-8"
+            },
+            "visible": true
+          },
+          {
+            "name": "password",
+            "type": "Microsoft.Common.PasswordBox",
+            "label": {
+              "password": "Password"
+            },
+            "toolTip": "",
+            "constraints": {
+              "required": true,
+              "regex": "",
+              "validationMessage": ""
+            },
+            "options": {
+              "hideConfirmation": true
+            },
+            "visible": true
+          },
+          {
+            "name": "people",
+            "type": "Microsoft.Common.EditableGrid",
+            "ariaLabel": "Enter information per person",
+            "label": "People",
+            "constraints": {
+              "width": "Full",
+              "rows": {
+                "count": {
+                  "min": 1,
+                  "max": 10
+                }
+              },
+              "columns": [
+                {
+                  "id": "colName",
+                  "header": "Name",
+                  "width": "1fr",
+                  "element": {
+                    "type": "Microsoft.Common.TextBox",
+                    "placeholder": "Full name",
+                    "constraints": {
+                      "required": true,
+                      "validations": [
+                        {
+                          "regex": "^[a-z0-9A-Z]{1,30}$",
+                          "message": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "colGender",
+                  "header": "Gender",
+                  "width": "1fr",
+                  "element": {
+                    "name": "dropDown1",
+                    "type": "Microsoft.Common.DropDown",
+                    "placeholder": "Select a gender...",
+                    "constraints": {
+                      "allowedValues": [
+                        {
+                          "label": "Female",
+                          "value": "female"
+                        },
+                        {
+                          "label": "Male",
+                          "value": "male"
+                        },
+                        {
+                          "label": "Other",
+                          "value": "other"
+                        }
+                      ],
+                      "required": true
+                    }
+                  }
+                },
+                {
+                  "id": "colContactPreference",
+                  "header": "Contact preference",
+                  "width": "1fr",
+                  "element": {
+                    "type": "Microsoft.Common.OptionsGroup",
+                    "constraints": {
+                      "allowedValues": [
+                        {
+                          "label": "Email",
+                          "value": "email"
+                        },
+                        {
+                          "label": "Text",
+                          "value": "text"
+                        }
+                      ],
+                      "required": true
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "tags",
+        "label": "Tags",
+        "elements": [
+          {
+            "name": "tagsByResource",
+            "type": "Microsoft.Common.TagsByResource",
+            "resources": [
+              "Microsoft.Storage/storageAccounts",
+              "Microsoft.Compute/virtualMachines"
+            ]
+          }
+        ]
       }
+    ],
+    "outputs": {
+      "outTextBox": "[basics('clusterName')]",
+      "outInfoBox": "[steps('simpleControls').infoMessage]",
+      "outDropDown": "[steps('simpleControls').iceCreamFlavors]",
+      "ouOptionsGroup": "[steps('simpleControls').coneType]",
+      "outTextBlock": "[steps('simpleControls').newsletter.announcement]",
+      "outSizeSelector": "[steps('vmParameters').vmSection.vmSize]",
+      "outUserNameTextBox": "[steps('vmParameters').adminUsername]",
+      "outCredentialsCombo": "[steps('vmParameters').vmCredentials]",
+      "outStorageAccountSelector": "[steps('storageSettings').sectionStorage1.singleStorage]",
+      "outMultiStorageAccountCombo": "[steps('storageSettings').sectionStorage2.multiStorage]",
+      "outPublicIpAddressCombo": "[steps('networking').sectionNetworking1.publicIp]",
+      "outVirtualNetworkCombo": "[steps('networking').vnet]",
+      "outStorageBlobSelector": "[steps('selectorControls').storageBlobSelectorSection.storageBlobSelection]",
+      "outKeyVaultCertificateSelector": "[steps('selectorControls').keyVaultCertificateSelectorSection.keyVaultCertificateSelection]",
+      "outFileUpload": "[steps('otherSettings').fileSelect]",
+      "outPasswordBox": "[steps('otherSettings').password]",
+      "outEditableGrid": "[steps('otherSettings').people]",
+      "outTagsByResource": "[steps('tags').tagsByResource]"
     }
-  ]
+  }
 }
